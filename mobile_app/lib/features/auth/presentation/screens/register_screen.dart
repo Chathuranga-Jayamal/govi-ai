@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/widgets/app_drawer.dart';
-
 class RegisterScreen extends StatelessWidget {
   const RegisterScreen({super.key});
 
@@ -10,7 +8,6 @@ class RegisterScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Register Screen')),
-      drawer: const AppDrawer(),
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,

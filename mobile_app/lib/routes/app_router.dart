@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 
+import '../core/widgets/main_shell.dart';
 import '../features/advisory/presentation/screens/advisory_chat_screen.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/register_screen.dart';
@@ -18,21 +19,43 @@ final GoRouter appRouter = GoRouter(
       path: '/register',
       builder: (context, state) => const RegisterScreen(),
     ),
-    GoRoute(
-      path: '/dashboard',
-      builder: (context, state) => const DashboardScreen(),
-    ),
-    GoRoute(
-      path: '/capture',
-      builder: (context, state) => const CaptureScreen(),
-    ),
-    GoRoute(
-      path: '/advisory',
-      builder: (context, state) => const AdvisoryChatScreen(),
-    ),
-    GoRoute(
-      path: '/marketplace',
-      builder: (context, state) => const ProductListScreen(),
+    StatefulShellRoute.indexedStack(
+      builder: (context, state, navigationShell) =>
+          MainShell(navigationShell: navigationShell),
+      branches: [
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/dashboard',
+              builder: (context, state) => const DashboardScreen(),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/capture',
+              builder: (context, state) => const CaptureScreen(),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/advisory',
+              builder: (context, state) => const AdvisoryChatScreen(),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/marketplace',
+              builder: (context, state) => const ProductListScreen(),
+            ),
+          ],
+        ),
+      ],
     ),
   ],
 );
