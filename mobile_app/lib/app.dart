@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'core/theme/app_theme.dart';
 import 'routes/app_router.dart';
 
 class GoviApp extends StatelessWidget {
@@ -9,6 +10,7 @@ class GoviApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'Govi-AI',
+      theme: AppTheme.light,
       routerConfig: appRouter,
     );
   }
