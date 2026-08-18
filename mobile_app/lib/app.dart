@@ -10,6 +10,7 @@ class GoviApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'Govi-AI',
+      debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       routerConfig: appRouter,
     );

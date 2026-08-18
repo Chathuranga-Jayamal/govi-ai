@@ -1,4 +1,5 @@
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../core/widgets/main_shell.dart';
 import '../features/advisory/presentation/screens/advisory_chat_screen.dart';
@@ -6,6 +7,7 @@ import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/register_screen.dart';
 import '../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../features/disease_detection/presentation/screens/capture_screen.dart';
+import '../features/disease_detection/presentation/screens/result_screen.dart';
 import '../features/marketplace/presentation/screens/product_list_screen.dart';
 
 final GoRouter appRouter = GoRouter(
@@ -18,6 +20,11 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/register',
       builder: (context, state) => const RegisterScreen(),
+    ),
+    GoRoute(
+      path: '/capture/result',
+      builder: (context, state) =>
+          ResultScreen(image: state.extra! as XFile),
     ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) =>
@@ -43,7 +50,9 @@ final GoRouter appRouter = GoRouter(
           routes: [
             GoRoute(
               path: '/advisory',
-              builder: (context, state) => const AdvisoryChatScreen(),
+              builder: (context, state) => AdvisoryChatScreen(
+                initialTopic: state.extra as String?,
+              ),
             ),
           ],
         ),

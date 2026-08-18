@@ -38,6 +38,9 @@ dependencies:
   # Declarative routing
   go_router: ^14.6.2
 
+  # Camera / gallery image selection for disease detection capture
+  image_picker: ^1.2.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
