@@ -5,6 +5,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../marketplace/domain/product.dart';
 import '../../../marketplace/presentation/widgets/product_card.dart';
+import '../../../profile/presentation/widgets/profile_preview_sheet.dart';
 
 class _RecentScan {
   const _RecentScan({
@@ -84,6 +85,14 @@ class DashboardScreen extends StatelessWidget {
     ).showSnackBar(const SnackBar(content: Text('Coming soon')));
   }
 
+  void _showProfilePreview(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => const ProfilePreviewSheet(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
@@ -120,18 +129,22 @@ class DashboardScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: AppSpacing.md),
-                  Container(
-                    width: 44,
-                    height: 44,
-                    alignment: Alignment.center,
-                    decoration: const BoxDecoration(
-                      color: AppColors.paddyGreenContainer,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      'K',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: AppColors.paddyGreenOnContainer,
+                  InkWell(
+                    borderRadius: BorderRadius.circular(22),
+                    onTap: () => _showProfilePreview(context),
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      alignment: Alignment.center,
+                      decoration: const BoxDecoration(
+                        color: AppColors.paddyGreenContainer,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        'K',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: AppColors.paddyGreenOnContainer,
+                        ),
                       ),
                     ),
                   ),

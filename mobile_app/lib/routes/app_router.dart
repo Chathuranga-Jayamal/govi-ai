@@ -14,6 +14,7 @@ import '../features/marketplace/presentation/screens/checkout_screen.dart';
 import '../features/marketplace/presentation/screens/order_confirmation_screen.dart';
 import '../features/marketplace/presentation/screens/product_detail_screen.dart';
 import '../features/marketplace/presentation/screens/product_list_screen.dart';
+import '../features/profile/presentation/screens/profile_screen.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/dashboard',
@@ -44,6 +45,11 @@ final GoRouter appRouter = GoRouter(
       path: '/marketplace/order-confirmation',
       builder: (context, state) =>
           OrderConfirmationScreen(orderNumber: state.extra! as String),
+    ),
+    GoRoute(
+      path: '/profile',
+      builder: (context, state) =>
+          ProfileScreen(scrollToOrderHistory: state.extra as bool? ?? false),
     ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) =>
