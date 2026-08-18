@@ -8,23 +8,42 @@ import '../features/auth/presentation/screens/register_screen.dart';
 import '../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../features/disease_detection/presentation/screens/capture_screen.dart';
 import '../features/disease_detection/presentation/screens/result_screen.dart';
+import '../features/marketplace/domain/product.dart';
+import '../features/marketplace/presentation/screens/cart_screen.dart';
+import '../features/marketplace/presentation/screens/checkout_screen.dart';
+import '../features/marketplace/presentation/screens/order_confirmation_screen.dart';
+import '../features/marketplace/presentation/screens/product_detail_screen.dart';
 import '../features/marketplace/presentation/screens/product_list_screen.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/dashboard',
   routes: [
-    GoRoute(
-      path: '/login',
-      builder: (context, state) => const LoginScreen(),
-    ),
+    GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(
       path: '/register',
       builder: (context, state) => const RegisterScreen(),
     ),
     GoRoute(
       path: '/capture/result',
+      builder: (context, state) => ResultScreen(image: state.extra! as XFile),
+    ),
+    GoRoute(
+      path: '/marketplace/product',
       builder: (context, state) =>
-          ResultScreen(image: state.extra! as XFile),
+          ProductDetailScreen(product: state.extra! as Product),
+    ),
+    GoRoute(
+      path: '/marketplace/cart',
+      builder: (context, state) => const CartScreen(),
+    ),
+    GoRoute(
+      path: '/marketplace/checkout',
+      builder: (context, state) => const CheckoutScreen(),
+    ),
+    GoRoute(
+      path: '/marketplace/order-confirmation',
+      builder: (context, state) =>
+          OrderConfirmationScreen(orderNumber: state.extra! as String),
     ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) =>
@@ -50,9 +69,8 @@ final GoRouter appRouter = GoRouter(
           routes: [
             GoRoute(
               path: '/advisory',
-              builder: (context, state) => AdvisoryChatScreen(
-                initialTopic: state.extra as String?,
-              ),
+              builder: (context, state) =>
+                  AdvisoryChatScreen(initialTopic: state.extra as String?),
             ),
           ],
         ),
