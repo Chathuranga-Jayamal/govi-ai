@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../marketplace/domain/product.dart';
+import '../../../marketplace/presentation/widgets/product_card.dart';
 
 class _RecentScan {
   const _RecentScan({
@@ -17,20 +19,6 @@ class _RecentScan {
   final String cropLabel;
   final String dateLabel;
   final int confidencePercent;
-  final IconData icon;
-}
-
-class _Product {
-  const _Product({
-    required this.name,
-    required this.priceLabel,
-    required this.badgeLabel,
-    required this.icon,
-  });
-
-  final String name;
-  final String priceLabel;
-  final String badgeLabel;
   final IconData icon;
 }
 
@@ -51,38 +39,9 @@ const List<_RecentScan> _recentScans = [
   ),
 ];
 
-const List<_Product> _popularProducts = [
-  _Product(
-    name: 'Lanka NPK 15:15:15 Fertilizer',
-    priceLabel: 'Rs. 2,450',
-    badgeLabel: 'Best Seller',
-    icon: Icons.grass,
-  ),
-  _Product(
-    name: 'Ceylon Agro Fungicide',
-    priceLabel: 'Rs. 1,180',
-    badgeLabel: 'Popular',
-    icon: Icons.bug_report,
-  ),
-  _Product(
-    name: 'Tea Master Foliar Spray',
-    priceLabel: 'Rs. 950',
-    badgeLabel: 'Popular',
-    icon: Icons.spa,
-  ),
-  _Product(
-    name: 'Coco Grow Dolomite',
-    priceLabel: 'Rs. 1,650',
-    badgeLabel: 'Best Seller',
-    icon: Icons.eco,
-  ),
-  _Product(
-    name: 'Nawaloka Rice Guard',
-    priceLabel: 'Rs. 1,320',
-    badgeLabel: 'Popular',
-    icon: Icons.shield_outlined,
-  ),
-];
+final List<Product> _popularProducts = mockProducts
+    .where((product) => product.isBestSeller)
+    .toList();
 
 const List<String> _weekdayNames = [
   'Monday',
@@ -120,9 +79,9 @@ class DashboardScreen extends StatelessWidget {
   }
 
   void _showComingSoon(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Coming soon')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Coming soon')));
   }
 
   @override
@@ -297,14 +256,25 @@ class DashboardScreen extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.sm),
               SizedBox(
-                height: 176,
+                height: 196,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: _popularProducts.length,
                   separatorBuilder: (_, _) =>
                       const SizedBox(width: AppSpacing.sm),
-                  itemBuilder: (context, index) =>
-                      _ProductCard(product: _popularProducts[index]),
+                  itemBuilder: (context, index) {
+                    final Product product = _popularProducts[index];
+                    return SizedBox(
+                      width: 156,
+                      child: ProductCard(
+                        product: product,
+                        onTap: () => context.push(
+                          '/marketplace/product',
+                          extra: product,
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ],
@@ -424,85 +394,6 @@ class _RecentScanCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodySmall,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ProductCard extends StatelessWidget {
-  const _ProductCard({required this.product});
-
-  final _Product product;
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.sm + AppSpacing.xs),
-        child: SizedBox(
-          width: 148,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Stack(
-                children: [
-                  Container(
-                    height: 84,
-                    width: double.infinity,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: AppColors.turmericGoldContainer,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      product.icon,
-                      color: AppColors.turmericGoldOnContainer,
-                      size: 30,
-                    ),
-                  ),
-                  Positioned(
-                    top: AppSpacing.xs,
-                    left: AppSpacing.xs,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.sm - 2,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.paddyGreen,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        product.badgeLabel,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: AppColors.riceHusk,
-                          letterSpacing: 0,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                product.name,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.labelLarge,
-              ),
-              const SizedBox(height: 2),
-              Text(
-                product.priceLabel,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: AppColors.paddyGreen,
-                  fontWeight: FontWeight.w600,
-                ),
               ),
             ],
           ),
