@@ -1,9 +1,6 @@
-/// Mock persona shared by the profile preview sheet and the full Profile
-/// screen — single source of truth so both stay in sync. Matches the
-/// same "Kumara Silva" persona used on Register and Checkout.
-const String mockUserName = 'Kumara Silva';
-const String mockUserEmail = 'kumara.silva@example.com';
-const String mockUserPhone = '077 123 4567';
+/// Mock "member since" date shared by the profile preview sheet — the
+/// `/auth/me` response has no created_at field yet, so this stays a
+/// placeholder until the backend exposes one.
 const String mockMemberSince = 'January 2026';
 
 enum OrderStatus {

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/state/current_user_controller.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../auth/domain/auth_user.dart';
 import '../../../marketplace/domain/product.dart';
 import '../../../marketplace/presentation/widgets/product_card.dart';
 import '../../../profile/presentation/widgets/profile_preview_sheet.dart';
@@ -69,8 +71,27 @@ const List<String> _monthNames = [
   'December',
 ];
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  bool _didRequestLoad = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_didRequestLoad) return;
+    _didRequestLoad = true;
+    final CurrentUserController controller = CurrentUserScope.of(context);
+    // Deferred to a microtask so the controller's first notifyListeners()
+    // never fires synchronously from within another element's
+    // didChangeDependencies/build pass (same reasoning as ProfileScreen).
+    Future.microtask(controller.load);
+  }
 
   String _formatToday() {
     final DateTime now = DateTime.now();
@@ -86,6 +107,10 @@ class DashboardScreen extends StatelessWidget {
   }
 
   void _showProfilePreview(BuildContext context) {
+    // Kicks off the shared fetch here (a plain tap handler, not a build
+    // pass) so it's safe to call synchronously; CurrentUserController.load()
+    // is a no-op if the user is already loaded or a fetch is in flight.
+    CurrentUserScope.of(context).load();
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -96,6 +121,13 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final AuthUser? user = CurrentUserScope.of(context).user;
+    final String? firstName = (user != null && user.fullName.trim().isNotEmpty)
+        ? user.fullName.trim().split(RegExp(r'\s+')).first
+        : null;
+    final String greeting = firstName != null
+        ? 'Good morning, $firstName'
+        : 'Good morning';
 
     return Scaffold(
       body: SafeArea(
@@ -114,10 +146,7 @@ class DashboardScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Good morning, Kumara',
-                          style: theme.textTheme.titleLarge,
-                        ),
+                        Text(greeting, style: theme.textTheme.titleLarge),
                         const SizedBox(height: AppSpacing.xs),
                         Text(
                           _formatToday(),
@@ -140,12 +169,17 @@ class DashboardScreen extends StatelessWidget {
                         color: AppColors.paddyGreenContainer,
                         shape: BoxShape.circle,
                       ),
-                      child: Text(
-                        'K',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: AppColors.paddyGreenOnContainer,
-                        ),
-                      ),
+                      child: firstName != null
+                          ? Text(
+                              firstName[0].toUpperCase(),
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: AppColors.paddyGreenOnContainer,
+                              ),
+                            )
+                          : const Icon(
+                              Icons.person_outline,
+                              color: AppColors.paddyGreenOnContainer,
+                            ),
                     ),
                   ),
                 ],

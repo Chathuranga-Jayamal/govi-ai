@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../core/storage/token_storage.dart';
 import '../core/widgets/main_shell.dart';
 import '../features/advisory/presentation/screens/advisory_chat_screen.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
@@ -16,8 +17,21 @@ import '../features/marketplace/presentation/screens/product_detail_screen.dart'
 import '../features/marketplace/presentation/screens/product_list_screen.dart';
 import '../features/profile/presentation/screens/profile_screen.dart';
 
+final TokenStorage _tokenStorage = TokenStorage();
+
+const List<String> _authRoutes = ['/login', '/register'];
+
 final GoRouter appRouter = GoRouter(
   initialLocation: '/dashboard',
+  redirect: (context, state) async {
+    final bool isAuthRoute = _authRoutes.contains(state.matchedLocation);
+    final String? token = await _tokenStorage.readToken();
+    final bool isLoggedIn = token != null;
+
+    if (!isLoggedIn && !isAuthRoute) return '/login';
+    if (isLoggedIn && isAuthRoute) return '/dashboard';
+    return null;
+  },
   routes: [
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(

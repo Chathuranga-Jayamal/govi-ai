@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../data/auth_repository.dart';
 import '../widgets/auth_brand_header.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -29,8 +31,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _obscureConfirmPassword = true;
   String _selectedLanguage = 'English';
   bool _agreedToTerms = true;
+  bool _isSubmitting = false;
+
+  final AuthRepository _authRepository = AuthRepository();
 
   static const List<String> _languages = ['සිංහල', 'தமிழ்', 'English'];
+  static const Map<String, String> _languageCodes = {
+    'සිංහල': 'si',
+    'தமிழ்': 'ta',
+    'English': 'en',
+  };
 
   @override
   void dispose() {
@@ -39,6 +49,41 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleRegister() async {
+    if (_passwordController.text != _confirmPasswordController.text) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Passwords do not match.')));
+      return;
+    }
+    if (!_agreedToTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please agree to the Terms of Service.')),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    try {
+      final String email = _emailController.text.trim();
+      final String password = _passwordController.text;
+      await _authRepository.register(
+        fullName: _nameController.text.trim(),
+        email: email,
+        password: password,
+        preferredLanguage: _languageCodes[_selectedLanguage],
+      );
+      await _authRepository.login(email: email, password: password);
+      if (!mounted) return;
+      context.go('/dashboard');
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   @override
@@ -154,8 +199,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(height: AppSpacing.sm),
               FilledButton(
-                onPressed: () => context.go('/dashboard'),
-                child: const Text('Create Account'),
+                onPressed: _isSubmitting ? null : _handleRegister,
+                child: _isSubmitting
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Create Account'),
               ),
               const SizedBox(height: AppSpacing.xl),
               Row(

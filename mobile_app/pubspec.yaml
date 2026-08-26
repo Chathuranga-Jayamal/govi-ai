@@ -41,6 +41,12 @@ dependencies:
   # Camera / gallery image selection for disease detection capture
   image_picker: ^1.2.3
 
+  # Backend API calls
+  http: ^1.2.2
+
+  # Secure on-device storage for the JWT
+  flutter_secure_storage: ^9.2.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/state/current_user_controller.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../auth/data/auth_repository.dart';
+import '../../../auth/domain/auth_user.dart';
 import '../../domain/user_profile.dart';
 
 class ProfilePreviewSheet extends StatelessWidget {
@@ -11,6 +14,18 @@ class ProfilePreviewSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final CurrentUserController userController = CurrentUserScope.of(context);
+    final AuthUser? user = userController.user;
+
+    final String displayName =
+        user?.fullName ??
+        (userController.errorMessage != null
+            ? 'Couldn\'t load profile'
+            : 'Loading…');
+    final String displayEmail = user?.email ?? '';
+    final String avatarInitial = (user != null && user.fullName.isNotEmpty)
+        ? user.fullName[0].toUpperCase()
+        : '?';
 
     return SafeArea(
       child: Padding(
@@ -27,17 +42,17 @@ class ProfilePreviewSheet extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: Text(
-                'K',
+                avatarInitial,
                 style: theme.textTheme.headlineSmall?.copyWith(
                   color: AppColors.paddyGreenOnContainer,
                 ),
               ),
             ),
             const SizedBox(height: AppSpacing.md),
-            Text(mockUserName, style: theme.textTheme.titleLarge),
+            Text(displayName, style: theme.textTheme.titleLarge),
             const SizedBox(height: AppSpacing.xs),
             Text(
-              mockUserEmail,
+              displayEmail,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: AppColors.soilInkSoft,
               ),
@@ -71,9 +86,13 @@ class ProfilePreviewSheet extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.sm),
             TextButton.icon(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.pop(context);
-                context.go('/login');
+                await AuthRepository().logout();
+                if (context.mounted) {
+                  CurrentUserScope.of(context).clear();
+                  context.go('/login');
+                }
               },
               icon: const Icon(Icons.logout, color: AppColors.alertRed),
               label: const Text(

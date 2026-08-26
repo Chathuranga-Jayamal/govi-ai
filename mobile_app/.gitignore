@@ -1,3 +1,6 @@
+# Local run config (per-developer API base URL) — see dart_define.example.json
+dart_define.json
+
 # Miscellaneous
 *.class
 *.log

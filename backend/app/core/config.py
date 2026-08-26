@@ -8,8 +8,13 @@ class Settings(BaseSettings):
     debug: bool = False
     api_v1_prefix: str = "/api/v1"
     database_url: str = "postgresql://user:password@localhost:5432/govi_ai"
+    jwt_secret_key: str = "changeme"
+    jwt_algorithm: str = "HS256"
+    jwt_expire_minutes: int = 60
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", extra="ignore"
+    )
 
 
 @lru_cache
