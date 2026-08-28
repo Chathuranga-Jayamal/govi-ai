@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     jwt_secret_key: str = "changeme"
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 60
+    llm_api_key: str = "changeme"
+    llm_model: str = "nvidia/nemotron-3-ultra-550b-a55b:free"
+    llm_base_url: str = "https://openrouter.ai/api/v1"
 
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", extra="ignore"
