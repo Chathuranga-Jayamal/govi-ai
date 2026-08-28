@@ -9,7 +9,7 @@
   ],
   "input_dtype": "float32",
   "input_layout": "NCHW",
-  "normalization": "0-1 (divide by 255); mean/std applied inside the graph",
+  "normalization": "0-1 (divide by 255), then ImageNet-style mean/std applied by the caller (mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225) at last verification). NOT baked into the graph for govi_model.pt -- confirmed by inspecting the checkpoint: its state_dict contains only the plain backbone (conv_stem/bn1/blocks/conv_head/norm_head/classifier), no normalization buffers. The intended DeployModel wrapper (mean/std as registered buffers) did not make it into this export. Read mean/std from govi_model.pt's own top-level dict at inference time rather than hardcoding the values above -- they are recorded here for documentation only. The .tflite export's normalization has not been independently verified and may or may not have the wrapper correctly baked in; check before relying on it.",
   "output": "softmax probabilities",
   "labels": [
     "banana___cordana",

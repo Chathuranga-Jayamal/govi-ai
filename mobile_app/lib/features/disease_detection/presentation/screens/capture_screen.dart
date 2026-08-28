@@ -2,8 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../data/disease_repository.dart';
+import '../../domain/capture_result_args.dart';
+
+class _CropOption {
+  const _CropOption(this.value, this.label, this.icon);
+
+  final String value;
+  final String label;
+  final IconData icon;
+}
+
+const List<_CropOption> _cropOptions = [
+  _CropOption('rice', 'Rice', Icons.grass),
+  _CropOption('tea', 'Tea', Icons.spa_outlined),
+  _CropOption('coconut', 'Coconut', Icons.park_outlined),
+  _CropOption('tomato', 'Tomato', Icons.local_florist_outlined),
+  _CropOption('chili', 'Chili', Icons.whatshot_outlined),
+  _CropOption('potato', 'Potato', Icons.egg_outlined),
+  _CropOption('corn', 'Corn', Icons.eco_outlined),
+  _CropOption('banana', 'Banana', Icons.nature_outlined),
+];
 
 class CaptureScreen extends StatefulWidget {
   const CaptureScreen({super.key});
@@ -14,9 +36,19 @@ class CaptureScreen extends StatefulWidget {
 
 class _CaptureScreenState extends State<CaptureScreen> {
   final ImagePicker _picker = ImagePicker();
+  final DiseaseRepository _diseaseRepository = DiseaseRepository();
+  String? _selectedCrop;
   bool _isAnalyzing = false;
 
   Future<void> _pickImage(ImageSource source) async {
+    final String? crop = _selectedCrop;
+    if (crop == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a crop first.')),
+      );
+      return;
+    }
+
     final XFile? image = await _picker.pickImage(
       source: source,
       imageQuality: 85,
@@ -25,13 +57,27 @@ class _CaptureScreenState extends State<CaptureScreen> {
 
     setState(() => _isAnalyzing = true);
 
-    // Simulated processing delay — real inference wiring comes in a later
-    // phase (ai_model/ integration).
-    await Future.delayed(const Duration(seconds: 2));
-    if (!mounted) return;
-
-    setState(() => _isAnalyzing = false);
-    context.push('/capture/result', extra: image);
+    try {
+      final result = await _diseaseRepository.predict(
+        imagePath: image.path,
+        crop: crop,
+      );
+      if (!mounted) return;
+      context.push(
+        '/capture/result',
+        extra: CaptureResultArgs(image: image, result: result),
+      );
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.message),
+          backgroundColor: AppColors.alertRed,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isAnalyzing = false);
+    }
   }
 
   @override
@@ -75,6 +121,31 @@ class _CaptureScreenState extends State<CaptureScreen> {
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: AppColors.soilInkSoft,
                       ),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+
+                    // Crop selector — required before a scan can be taken
+                    Text('Select Crop', style: theme.textTheme.titleMedium),
+                    const SizedBox(height: AppSpacing.sm),
+                    Wrap(
+                      spacing: AppSpacing.sm,
+                      runSpacing: AppSpacing.sm,
+                      children: [
+                        for (final crop in _cropOptions)
+                          ChoiceChip(
+                            avatar: Icon(
+                              crop.icon,
+                              size: 18,
+                              color: _selectedCrop == crop.value
+                                  ? AppColors.paddyGreenOnContainer
+                                  : AppColors.soilInkSoft,
+                            ),
+                            label: Text(crop.label),
+                            selected: _selectedCrop == crop.value,
+                            onSelected: (_) =>
+                                setState(() => _selectedCrop = crop.value),
+                          ),
+                      ],
                     ),
                     const SizedBox(height: AppSpacing.xl),
 
@@ -186,21 +257,6 @@ class _CaptureScreenState extends State<CaptureScreen> {
                     ),
                     const SizedBox(height: AppSpacing.xl),
 
-                    // Supported crops
-                    Text(
-                      'Supported Crops',
-                      style: theme.textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    const Wrap(
-                      spacing: AppSpacing.sm,
-                      runSpacing: AppSpacing.sm,
-                      children: [
-                        _CropChip(icon: Icons.grass, label: 'Rice'),
-                        _CropChip(icon: Icons.spa_outlined, label: 'Tea'),
-                        _CropChip(icon: Icons.park_outlined, label: 'Coconut'),
-                      ],
-                    ),
                   ],
                 ),
               ),
@@ -242,40 +298,6 @@ class _ScanTipRow extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _CropChip extends StatelessWidget {
-  const _CropChip({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm + AppSpacing.xs,
-        vertical: AppSpacing.xs + 2,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.paddyGreenContainer,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: AppColors.paddyGreenOnContainer, size: 18),
-          const SizedBox(width: AppSpacing.xs),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: AppColors.paddyGreenOnContainer,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

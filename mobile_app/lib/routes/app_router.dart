@@ -1,5 +1,4 @@
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 
 import '../core/storage/token_storage.dart';
 import '../core/widgets/main_shell.dart';
@@ -7,6 +6,7 @@ import '../features/advisory/presentation/screens/advisory_chat_screen.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/register_screen.dart';
 import '../features/dashboard/presentation/screens/dashboard_screen.dart';
+import '../features/disease_detection/domain/capture_result_args.dart';
 import '../features/disease_detection/presentation/screens/capture_screen.dart';
 import '../features/disease_detection/presentation/screens/result_screen.dart';
 import '../features/marketplace/domain/product.dart';
@@ -40,7 +40,10 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: '/capture/result',
-      builder: (context, state) => ResultScreen(image: state.extra! as XFile),
+      builder: (context, state) {
+        final CaptureResultArgs args = state.extra! as CaptureResultArgs;
+        return ResultScreen(image: args.image, result: args.result);
+      },
     ),
     GoRoute(
       path: '/marketplace/product',

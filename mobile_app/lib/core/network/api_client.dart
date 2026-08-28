@@ -67,6 +67,31 @@ class ApiClient {
     return _decode(response);
   }
 
+  Future<Map<String, dynamic>> postMultipart(
+    String path, {
+    required String filePath,
+    required String fileField,
+    Map<String, String>? fields,
+    String? token,
+  }) async {
+    final Uri uri = Uri.parse('${ApiConfig.baseUrl}$path');
+    final http.MultipartRequest request = http.MultipartRequest('POST', uri);
+    if (token != null) request.headers['Authorization'] = 'Bearer $token';
+    request.fields.addAll(fields ?? const {});
+    request.files.add(await http.MultipartFile.fromPath(fileField, filePath));
+
+    final http.Response response;
+    try {
+      final http.StreamedResponse streamed = await _httpClient.send(request);
+      response = await http.Response.fromStream(streamed);
+    } catch (_) {
+      throw const ApiException(
+        'Could not reach the server. Check your connection and try again.',
+      );
+    }
+    return _decode(response);
+  }
+
   Map<String, String> _headers(String? token) => {
     'Content-Type': 'application/json',
     if (token != null) 'Authorization': 'Bearer $token',

@@ -6,23 +6,34 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../domain/prediction_result.dart';
 
-/// Mock prediction data — real inference wiring against
-/// ai_model/artifacts/model.tflite comes in a later phase.
-const String _mockDiseaseName = 'Rice Blast';
-const int _mockConfidencePercent = 92;
-const String _mockRecommendation =
-    'Apply a tricyclazole-based fungicide and avoid excess nitrogen '
-    'fertilizer until symptoms clear.';
+/// Turns "leaf_spot" into "Leaf Spot" for display.
+String _titleCase(String value) => value
+    .split('_')
+    .map((word) => word.isEmpty ? word : word[0].toUpperCase() + word.substring(1))
+    .join(' ');
 
 class ResultScreen extends StatelessWidget {
-  const ResultScreen({required this.image, super.key});
+  const ResultScreen({required this.image, required this.result, super.key});
 
   final XFile image;
+  final PredictionResult result;
 
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+
+    if (!result.isOk) {
+      return _UncertainResultView(image: image, result: result, theme: theme);
+    }
+
+    final String cropName = _titleCase(result.crop!);
+    final String diseaseName = _titleCase(result.disease!);
+    final String displayName = result.disease == 'healthy'
+        ? '$cropName — Healthy'
+        : '$cropName — $diseaseName';
+    final int confidencePercent = (result.confidence * 100).round();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Scan Result')),
@@ -94,7 +105,7 @@ class ResultScreen extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      _mockDiseaseName,
+                      displayName,
                       style: theme.textTheme.headlineSmall,
                     ),
                   ),
@@ -108,7 +119,7 @@ class ResultScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      '$_mockConfidencePercent% confidence',
+                      '$confidencePercent% confidence',
                       style: theme.textTheme.labelMedium?.copyWith(
                         color: AppColors.paddyGreenOnContainer,
                       ),
@@ -116,20 +127,10 @@ class ResultScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                _mockRecommendation,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: AppColors.soilInkSoft,
-                ),
-              ),
               const SizedBox(height: AppSpacing.xl),
 
               FilledButton.icon(
-                onPressed: () => context.go(
-                  '/advisory',
-                  extra: _mockDiseaseName,
-                ),
+                onPressed: () => context.go('/advisory', extra: displayName),
                 icon: const Icon(Icons.chat_bubble_outline),
                 label: const Text('Ask Advisory About This'),
               ),
@@ -138,6 +139,80 @@ class ResultScreen extends StatelessWidget {
                 onPressed: () => context.pop(),
                 icon: const Icon(Icons.camera_alt_outlined),
                 label: const Text('Scan Another'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Shown for the `low_confidence` and `not_a_leaf` statuses — no crop or
+/// disease is available in either case, so this shows the backend's
+/// user-facing message and prompts a retake instead.
+class _UncertainResultView extends StatelessWidget {
+  const _UncertainResultView({
+    required this.image,
+    required this.result,
+    required this.theme,
+  });
+
+  final XFile image;
+  final PredictionResult result;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Scan Result')),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.file(
+                  File(image.path),
+                  height: 240,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: AppColors.turmericGoldContainer,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      color: AppColors.turmericGoldOnContainer,
+                      size: 28,
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        result.message ?? 'Unable to identify this photo.',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: AppColors.turmericGoldOnContainer,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              FilledButton.icon(
+                onPressed: () => context.pop(),
+                icon: const Icon(Icons.camera_alt_outlined),
+                label: const Text('Retake Photo'),
               ),
             ],
           ),
