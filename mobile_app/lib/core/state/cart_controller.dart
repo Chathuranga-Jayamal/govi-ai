@@ -43,12 +43,12 @@ class CartController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void removeItem(String productId) {
+  void removeItem(int productId) {
     _items.removeWhere((item) => item.product.id == productId);
     notifyListeners();
   }
 
-  void updateQuantity(String productId, int quantity) {
+  void updateQuantity(int productId, int quantity) {
     final int index = _items.indexWhere((item) => item.product.id == productId);
     if (index < 0) return;
 

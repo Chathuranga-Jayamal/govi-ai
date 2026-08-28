@@ -5,6 +5,7 @@ import '../../../../core/state/current_user_controller.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/domain/auth_user.dart';
+import '../../../marketplace/data/product_repository.dart';
 import '../../../marketplace/domain/product.dart';
 import '../../../marketplace/presentation/widgets/product_card.dart';
 import '../../../profile/presentation/widgets/profile_preview_sheet.dart';
@@ -42,10 +43,6 @@ const List<_RecentScan> _recentScans = [
   ),
 ];
 
-final List<Product> _popularProducts = mockProducts
-    .where((product) => product.isBestSeller)
-    .toList();
-
 const List<String> _weekdayNames = [
   'Monday',
   'Tuesday',
@@ -81,6 +78,8 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   bool _didRequestLoad = false;
 
+  List<Product>? _popularProducts;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -91,6 +90,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
     // never fires synchronously from within another element's
     // didChangeDependencies/build pass (same reasoning as ProfileScreen).
     Future.microtask(controller.load);
+    Future.microtask(_loadPopularProducts);
+  }
+
+  // This is a decorative secondary section, not core functionality — on
+  // failure it just stays hidden (see build()) rather than showing an
+  // error banner on the dashboard.
+  Future<void> _loadPopularProducts() async {
+    try {
+      final List<Product> products = await ProductRepository().getProducts(
+        bestSeller: true,
+      );
+      if (!mounted) return;
+      setState(() => _popularProducts = products);
+    } catch (_) {
+      // Left as null — the section simply doesn't render.
+    }
   }
 
   String _formatToday() {
@@ -292,38 +307,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               const SizedBox(height: AppSpacing.xl),
 
-              // Popular products
-              Text('Popular in your area', style: theme.textTheme.titleMedium),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                'Trusted by farmers near you',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: AppColors.soilInkSoft,
+              // Popular products — hidden until loaded (or if the fetch
+              // failed / returned nothing), since this is a secondary,
+              // decorative section rather than core functionality.
+              if (_popularProducts != null && _popularProducts!.isNotEmpty) ...[
+                Text(
+                  'Popular in your area',
+                  style: theme.textTheme.titleMedium,
                 ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              SizedBox(
-                height: 196,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _popularProducts.length,
-                  separatorBuilder: (_, _) =>
-                      const SizedBox(width: AppSpacing.sm),
-                  itemBuilder: (context, index) {
-                    final Product product = _popularProducts[index];
-                    return SizedBox(
-                      width: 156,
-                      child: ProductCard(
-                        product: product,
-                        onTap: () => context.push(
-                          '/marketplace/product',
-                          extra: product,
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  'Trusted by farmers near you',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: AppColors.soilInkSoft,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                SizedBox(
+                  height: 196,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _popularProducts!.length,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(width: AppSpacing.sm),
+                    itemBuilder: (context, index) {
+                      final Product product = _popularProducts![index];
+                      return SizedBox(
+                        width: 156,
+                        child: ProductCard(
+                          product: product,
+                          onTap: () => context.push(
+                            '/marketplace/product',
+                            extra: product,
+                          ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         ),

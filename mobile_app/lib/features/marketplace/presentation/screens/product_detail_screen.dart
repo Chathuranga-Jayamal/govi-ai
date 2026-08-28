@@ -5,6 +5,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/product.dart';
 import '../widgets/cart_icon_button.dart';
+import '../widgets/product_image.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   const ProductDetailScreen({required this.product, super.key});
@@ -49,17 +50,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Container(
+              SizedBox(
                 height: 200,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: AppColors.paddyGreenContainer,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(
-                  product.imageIcon,
-                  color: AppColors.paddyGreenOnContainer,
-                  size: 72,
+                width: double.infinity,
+                child: ProductImage(
+                  imageUrl: product.imageUrl,
+                  backgroundColor: AppColors.paddyGreenContainer,
+                  iconColor: AppColors.paddyGreenOnContainer,
+                  borderRadius: 16,
+                  iconSize: 72,
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -97,45 +96,20 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               ),
               const SizedBox(height: AppSpacing.lg),
 
-              Text(product.shortDescription, style: theme.textTheme.bodyMedium),
-              const SizedBox(height: AppSpacing.xl),
+              if (product.description != null) ...[
+                Text(product.description!, style: theme.textTheme.bodyMedium),
+                const SizedBox(height: AppSpacing.xl),
+              ],
 
-              Text('How to Use', style: theme.textTheme.titleMedium),
-              const SizedBox(height: AppSpacing.sm),
-              for (int i = 0; i < product.usageInstructions.length; i++)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 22,
-                        height: 22,
-                        alignment: Alignment.center,
-                        decoration: const BoxDecoration(
-                          color: AppColors.paddyGreenContainer,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Text(
-                          '${i + 1}',
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: AppColors.paddyGreenOnContainer,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 2),
-                          child: Text(
-                            product.usageInstructions[i],
-                            style: theme.textTheme.bodyMedium,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+              if (product.usageInstructions != null) ...[
+                Text('How to Use', style: theme.textTheme.titleMedium),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  product.usageInstructions!,
+                  style: theme.textTheme.bodyMedium,
                 ),
+                const SizedBox(height: AppSpacing.sm),
+              ],
 
               if (product.warningText != null) ...[
                 const SizedBox(height: AppSpacing.sm),

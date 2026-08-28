@@ -5,6 +5,7 @@ import '../../../../core/state/cart_controller.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/product.dart';
+import '../widgets/product_image.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -146,18 +147,15 @@ class _CartItemRow extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
+            SizedBox(
               width: 56,
               height: 56,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: AppColors.paddyGreenContainer,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                product.imageIcon,
-                color: AppColors.paddyGreenOnContainer,
-                size: 26,
+              child: ProductImage(
+                imageUrl: product.imageUrl,
+                backgroundColor: AppColors.paddyGreenContainer,
+                iconColor: AppColors.paddyGreenOnContainer,
+                borderRadius: 12,
+                iconSize: 26,
               ),
             ),
             const SizedBox(width: AppSpacing.sm),

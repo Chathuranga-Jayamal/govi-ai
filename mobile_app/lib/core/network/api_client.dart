@@ -74,6 +74,26 @@ class ApiClient {
     return _decode(response);
   }
 
+  Future<List<dynamic>> getList(
+    String path, {
+    Map<String, String>? queryParameters,
+    String? token,
+  }) async {
+    final Uri baseUri = Uri.parse('${ApiConfig.baseUrl}$path');
+    final Uri uri = (queryParameters == null || queryParameters.isEmpty)
+        ? baseUri
+        : baseUri.replace(queryParameters: queryParameters);
+    final http.Response response;
+    try {
+      response = await _httpClient.get(uri, headers: _headers(token));
+    } catch (_) {
+      throw const ApiException(
+        'Could not reach the server. Check your connection and try again.',
+      );
+    }
+    return _decodeList(response);
+  }
+
   Future<Map<String, dynamic>> postMultipart(
     String path, {
     required String filePath,
@@ -111,6 +131,23 @@ class ApiClient {
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return decoded as Map<String, dynamic>;
+    }
+
+    final String message =
+        (decoded is Map<String, dynamic>
+            ? decoded['detail']?.toString()
+            : null) ??
+        'Something went wrong. Please try again.';
+    throw ApiException(message, statusCode: response.statusCode);
+  }
+
+  List<dynamic> _decodeList(http.Response response) {
+    final dynamic decoded = response.body.isEmpty
+        ? []
+        : jsonDecode(response.body);
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return decoded as List<dynamic>;
     }
 
     final String message =

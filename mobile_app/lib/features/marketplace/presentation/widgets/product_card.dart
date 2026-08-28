@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/product.dart';
+import 'product_image.dart';
 
 (Color container, Color onContainer) _categoryColors(ProductCategory category) {
   switch (category) {
@@ -44,17 +45,12 @@ class ProductCard extends StatelessWidget {
                 children: [
                   AspectRatio(
                     aspectRatio: 1.4,
-                    child: Container(
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: container,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        product.imageIcon,
-                        color: onContainer,
-                        size: 32,
-                      ),
+                    child: ProductImage(
+                      imageUrl: product.imageUrl,
+                      backgroundColor: container,
+                      iconColor: onContainer,
+                      borderRadius: 12,
+                      iconSize: 32,
                     ),
                   ),
                   if (product.isBestSeller)
