@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -35,6 +37,15 @@ class ResultScreen extends StatelessWidget {
         : '$cropName — $diseaseName';
     final int confidencePercent = (result.confidence * 100).round();
 
+    Uint8List? heatmapBytes;
+    if (result.heatmapUrl != null) {
+      try {
+        heatmapBytes = base64Decode(result.heatmapUrl!);
+      } catch (_) {
+        heatmapBytes = null;
+      }
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text('Scan Result')),
       body: SafeArea(
@@ -54,49 +65,62 @@ class ResultScreen extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.md),
 
-              // Mock heatmap placeholder
+              // Grad-CAM heatmap: real decoded overlay when the backend sent
+              // one, otherwise the same placeholder as before.
               Container(
-                padding: const EdgeInsets.all(AppSpacing.md),
+                clipBehavior: Clip.antiAlias,
+                padding: heatmapBytes == null
+                    ? const EdgeInsets.all(AppSpacing.md)
+                    : EdgeInsets.zero,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.turmericGoldContainer,
-                      AppColors.alertRedContainer,
-                    ],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                  ),
+                  gradient: heatmapBytes == null
+                      ? LinearGradient(
+                          colors: [
+                            AppColors.turmericGoldContainer,
+                            AppColors.alertRedContainer,
+                          ],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        )
+                      : null,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.local_fire_department,
-                      color: AppColors.alertRedOnContainer,
-                      size: 28,
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                child: heatmapBytes != null
+                    ? Image.memory(
+                        heatmapBytes,
+                        height: 240,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      )
+                    : Row(
                         children: [
-                          Text(
-                            'Heatmap preview',
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              color: AppColors.alertRedOnContainer,
-                            ),
+                          const Icon(
+                            Icons.local_fire_department,
+                            color: AppColors.alertRedOnContainer,
+                            size: 28,
                           ),
-                          Text(
-                            'Grad-CAM explainability coming later',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: AppColors.alertRedOnContainer,
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Heatmap preview',
+                                  style: theme.textTheme.titleSmall?.copyWith(
+                                    color: AppColors.alertRedOnContainer,
+                                  ),
+                                ),
+                                Text(
+                                  'Grad-CAM explainability coming later',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: AppColors.alertRedOnContainer,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
               ),
               const SizedBox(height: AppSpacing.xl),
 

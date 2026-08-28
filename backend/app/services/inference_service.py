@@ -1,3 +1,4 @@
+import base64
 import json
 from dataclasses import dataclass
 from functools import lru_cache
@@ -8,6 +9,9 @@ import numpy as np
 import timm
 import torch
 from PIL import Image
+from pytorch_grad_cam import GradCAM
+from pytorch_grad_cam.utils.image import show_cam_on_image
+from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 
 _ARTIFACTS_DIR = Path(__file__).resolve().parents[3] / "ai_model" / "artifacts"
 _METADATA_PATH = _ARTIFACTS_DIR / "model_metadata.json"
@@ -29,6 +33,7 @@ class PredictionResult:
     disease: str | None
     confidence: float
     message: str | None
+    heatmap_base64: str | None = None
 
 
 class InvalidCropError(ValueError):
@@ -70,13 +75,32 @@ class InferenceService:
             raise InvalidCropError(f"Unrecognized crop: {raw_crop!r}")
         return normalized
 
-    def _preprocess(self, image_bytes: bytes) -> torch.Tensor:
+    def _preprocess(self, image_bytes: bytes) -> tuple[torch.Tensor, np.ndarray]:
         image = Image.open(BytesIO(image_bytes)).convert("RGB")
         image = image.resize(self._input_size)
-        array = np.asarray(image, dtype=np.float32) / 255.0
-        tensor = torch.from_numpy(array).permute(2, 0, 1)
+        # rgb_array is the 0-1 resized photo, kept alongside the normalized
+        # tensor so Grad-CAM can overlay its heatmap on the same pixels the
+        # model actually saw, without re-decoding or re-resizing the image.
+        rgb_array = np.asarray(image, dtype=np.float32) / 255.0
+        tensor = torch.from_numpy(rgb_array).permute(2, 0, 1)
         tensor = (tensor - self._mean) / self._std
-        return tensor.unsqueeze(0)
+        return tensor.unsqueeze(0), rgb_array
+
+    def _generate_heatmap(
+        self, tensor: torch.Tensor, rgb_array: np.ndarray, target_index: int
+    ) -> str:
+        # Built and torn down per call (not cached on the service) so its
+        # forward/backward hooks never linger on the shared model singleton
+        # between concurrent requests.
+        with GradCAM(model=self._model, target_layers=[self._model.blocks[-1]]) as cam:
+            grayscale_cam = cam(
+                input_tensor=tensor, targets=[ClassifierOutputTarget(target_index)]
+            )[0]
+
+        overlay = show_cam_on_image(rgb_array, grayscale_cam, use_rgb=True)
+        buffer = BytesIO()
+        Image.fromarray(overlay).save(buffer, format="PNG")
+        return base64.b64encode(buffer.getvalue()).decode("ascii")
 
     def predict(self, image_bytes: bytes, raw_crop: str) -> PredictionResult:
         crop = self.normalize_crop(raw_crop)
@@ -86,7 +110,7 @@ class InferenceService:
         # impossible to ever surface.
         allowed_indices = self._crop_to_indices[crop] + self._unknown_indices
 
-        tensor = self._preprocess(image_bytes)
+        tensor, rgb_array = self._preprocess(image_bytes)
         with torch.no_grad():
             logits = self._model(tensor)[0]
 
@@ -117,12 +141,15 @@ class InferenceService:
                 message=_LOW_CONFIDENCE_MESSAGE,
             )
 
+        heatmap_base64 = self._generate_heatmap(tensor, rgb_array, top_index.item())
+
         return PredictionResult(
             status="ok",
             crop=predicted_crop,
             disease=condition,
             confidence=confidence,
             message=None,
+            heatmap_base64=heatmap_base64,
         )
 
 

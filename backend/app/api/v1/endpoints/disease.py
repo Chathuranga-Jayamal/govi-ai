@@ -41,5 +41,5 @@ async def predict(
         disease=result.disease,
         confidence=result.confidence,
         message=result.message,
-        heatmap_url=None,
+        heatmap_url=result.heatmap_base64,
     )
