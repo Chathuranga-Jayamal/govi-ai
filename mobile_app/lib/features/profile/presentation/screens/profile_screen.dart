@@ -7,7 +7,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/data/auth_repository.dart';
 import '../../../auth/domain/auth_user.dart';
-import '../../domain/user_profile.dart';
+import '../../../marketplace/data/order_repository.dart';
+import '../../../marketplace/domain/order.dart';
 import '../widgets/order_card.dart';
 
 /// Maps the `preferred_language` code the backend stores (see
@@ -52,6 +53,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   static const List<String> _languages = ['සිංහල', 'தமிழ்', 'English'];
 
   final GlobalKey _orderHistoryKey = GlobalKey();
+  final OrderRepository _orderRepository = OrderRepository();
 
   bool _didRequestLoad = false;
   int? _syncedUserId;
@@ -59,6 +61,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isSavingProfile = false;
   bool _isUpdatingLanguage = false;
   bool _isChangingPassword = false;
+
+  List<Order>? _orders;
+  bool _isLoadingOrders = true;
+  String? _ordersError;
 
   @override
   void initState() {
@@ -86,6 +92,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
     // (isLoading = true) never fires synchronously from within another
     // element's didChangeDependencies/build pass.
     Future.microtask(controller.load);
+    Future.microtask(_loadOrders);
+  }
+
+  Future<void> _loadOrders() async {
+    setState(() {
+      _isLoadingOrders = true;
+      _ordersError = null;
+    });
+    try {
+      final List<Order> orders = await _orderRepository.getOrders();
+      if (!mounted) return;
+      setState(() => _orders = orders);
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      setState(() => _ordersError = error.message);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _ordersError = 'Something went wrong. Please try again.');
+    } finally {
+      if (mounted) setState(() => _isLoadingOrders = false);
+    }
   }
 
   void _syncControllersWith(AuthUser user) {
@@ -238,6 +265,48 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return const Center(child: CircularProgressIndicator());
   }
 
+  Widget _buildOrderHistory() {
+    final List<Order>? orders = _orders;
+
+    if (orders == null && _isLoadingOrders) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (_ordersError != null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              _ordersError!,
+              style: const TextStyle(color: AppColors.alertRed),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            OutlinedButton(onPressed: _loadOrders, child: const Text('Retry')),
+          ],
+        ),
+      );
+    }
+    if (orders == null || orders.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
+        child: Text('No orders yet.'),
+      );
+    }
+    return Column(
+      children: [
+        for (final order in orders)
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+            child: OrderCard(order: order),
+          ),
+      ],
+    );
+  }
+
   Widget _buildForm(ThemeData theme) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -388,11 +457,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Text('Order History', style: theme.textTheme.titleMedium),
           ),
           const SizedBox(height: AppSpacing.sm),
-          for (final order in mockOrders)
-            Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-              child: OrderCard(order: order),
-            ),
+          _buildOrderHistory(),
           const SizedBox(height: AppSpacing.xl),
 
           // e. Log Out

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../domain/user_profile.dart';
+import '../../../marketplace/domain/order.dart';
 
 // Desaturated, feature-local tones for the Cancelled badge — deliberately
 // not AppColors.alertRed*, so a cancelled order doesn't visually read as

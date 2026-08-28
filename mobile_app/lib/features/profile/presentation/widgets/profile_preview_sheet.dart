@@ -6,6 +6,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/data/auth_repository.dart';
 import '../../../auth/domain/auth_user.dart';
+import '../../../marketplace/data/order_repository.dart';
 import '../../domain/user_profile.dart';
 
 class ProfilePreviewSheet extends StatelessWidget {
@@ -61,7 +62,16 @@ class ProfilePreviewSheet extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _StatChip(label: '${mockOrders.length} Orders'),
+                FutureBuilder<int>(
+                  future: OrderRepository().getOrders().then(
+                    (orders) => orders.length,
+                  ),
+                  builder: (context, snapshot) => _StatChip(
+                    label: snapshot.hasData
+                        ? '${snapshot.data} Orders'
+                        : 'Orders',
+                  ),
+                ),
                 const SizedBox(width: AppSpacing.sm),
                 _StatChip(label: 'Member since $mockMemberSince'),
               ],

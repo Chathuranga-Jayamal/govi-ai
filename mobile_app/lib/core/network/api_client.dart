@@ -94,6 +94,19 @@ class ApiClient {
     return _decodeList(response);
   }
 
+  Future<Map<String, dynamic>> delete(String path, {String? token}) async {
+    final Uri uri = Uri.parse('${ApiConfig.baseUrl}$path');
+    final http.Response response;
+    try {
+      response = await _httpClient.delete(uri, headers: _headers(token));
+    } catch (_) {
+      throw const ApiException(
+        'Could not reach the server. Check your connection and try again.',
+      );
+    }
+    return _decode(response);
+  }
+
   Future<Map<String, dynamic>> postMultipart(
     String path, {
     required String filePath,

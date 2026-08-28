@@ -22,6 +22,11 @@ class _CartIconButtonState extends State<CartIconButton> {
     if (_controller != controller) {
       _controller?.removeListener(_onCartChanged);
       _controller = controller..addListener(_onCartChanged);
+      // No-op if already loaded or a fetch is in flight — this button is
+      // rendered on Dashboard/Marketplace/Product Detail/Cart, so this
+      // reliably fires the real cart fetch exactly once, whichever of
+      // those screens the user reaches first.
+      Future.microtask(controller.load);
     }
   }
 
