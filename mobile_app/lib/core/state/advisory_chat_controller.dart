@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../features/advisory/domain/advisory_topic.dart';
+
 class ChatMessage {
   const ChatMessage({required this.text, required this.isUser});
 
@@ -31,19 +33,25 @@ class ChatSession {
 /// own State has no lifecycle hook for "the user just switched tabs", so
 /// the source of truth for "should this be a fresh conversation" has to
 /// live somewhere both the bottom nav and the screen itself can reach.
+///
+/// Message content itself (seeding the first reply, handling follow-ups)
+/// is fetched from the real /advisory endpoint by AdvisoryChatScreen — this
+/// controller only holds the resulting messages/topic, since that fetch is
+/// asynchronous and needs a visible loading state the screen owns.
 class AdvisoryChatController extends ChangeNotifier {
   List<ChatMessage> _messages = [];
-  String? _currentTopic;
+  AdvisoryTopic? _topic;
   final List<ChatSession> _history = [];
 
   List<ChatMessage> get messages => List.unmodifiable(_messages);
-  String? get currentTopic => _currentTopic;
+  AdvisoryTopic? get topic => _topic;
+  String? get currentTopic => _topic?.label;
   List<ChatSession> get history => List.unmodifiable(_history);
 
-  void startConversation({String? topic}) {
+  void startConversation({AdvisoryTopic? topic}) {
     _archiveIfNeeded();
-    _messages = topic == null ? [] : [_diagnosisSeedMessage(topic)];
-    _currentTopic = topic;
+    _messages = [];
+    _topic = topic;
     notifyListeners();
   }
 
@@ -64,24 +72,10 @@ class AdvisoryChatController extends ChangeNotifier {
     _history.insert(
       0,
       ChatSession(
-        topic: _currentTopic,
+        topic: _topic?.label,
         messages: _messages,
         timestamp: DateTime.now(),
       ),
-    );
-  }
-
-  static ChatMessage _diagnosisSeedMessage(String topic) {
-    return ChatMessage(
-      text:
-          "I see you've diagnosed $topic. Here's what I recommend: "
-          'treat the affected plants promptly with an approved '
-          "fungicide, remove and destroy heavily infected leaves so "
-          "the disease doesn't spread, and avoid overhead irrigation "
-          'in the evening since damp foliage overnight makes it '
-          'worse. Keep an eye on nearby plants over the next few '
-          'days for early signs.',
-      isUser: false,
     );
   }
 }

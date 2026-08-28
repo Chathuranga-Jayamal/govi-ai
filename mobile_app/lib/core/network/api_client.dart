@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -16,14 +17,20 @@ class ApiClient {
     String path, {
     Map<String, dynamic>? body,
     String? token,
+    Duration? timeout,
   }) async {
     final Uri uri = Uri.parse('${ApiConfig.baseUrl}$path');
     final http.Response response;
     try {
-      response = await _httpClient.post(
+      final Future<http.Response> request = _httpClient.post(
         uri,
         headers: _headers(token),
         body: jsonEncode(body ?? const {}),
+      );
+      response = timeout == null ? await request : await request.timeout(timeout);
+    } on TimeoutException {
+      throw const ApiException(
+        'The server is taking too long to respond. Please try again.',
       );
     } catch (_) {
       throw const ApiException(

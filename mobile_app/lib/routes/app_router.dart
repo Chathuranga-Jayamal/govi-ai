@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 
 import '../core/storage/token_storage.dart';
 import '../core/widgets/main_shell.dart';
+import '../features/advisory/domain/advisory_topic.dart';
 import '../features/advisory/presentation/screens/advisory_chat_screen.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/register_screen.dart';
@@ -92,8 +93,9 @@ final GoRouter appRouter = GoRouter(
           routes: [
             GoRoute(
               path: '/advisory',
-              builder: (context, state) =>
-                  AdvisoryChatScreen(initialTopic: state.extra as String?),
+              builder: (context, state) => AdvisoryChatScreen(
+                initialTopic: state.extra as AdvisoryTopic?,
+              ),
             ),
           ],
         ),

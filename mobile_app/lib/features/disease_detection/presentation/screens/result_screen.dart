@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../advisory/domain/advisory_topic.dart';
 import '../../domain/prediction_result.dart';
 
 /// Turns "leaf_spot" into "Leaf Spot" for display.
@@ -154,7 +155,14 @@ class ResultScreen extends StatelessWidget {
               const SizedBox(height: AppSpacing.xl),
 
               FilledButton.icon(
-                onPressed: () => context.go('/advisory', extra: displayName),
+                onPressed: () => context.go(
+                  '/advisory',
+                  extra: AdvisoryTopic(
+                    crop: result.crop!,
+                    disease: result.disease!,
+                    label: displayName,
+                  ),
+                ),
                 icon: const Icon(Icons.chat_bubble_outline),
                 label: const Text('Ask Advisory About This'),
               ),
