@@ -13,7 +13,21 @@ from pytorch_grad_cam import GradCAM
 from pytorch_grad_cam.utils.image import show_cam_on_image
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 
-_ARTIFACTS_DIR = Path(__file__).resolve().parents[3] / "ai_model" / "artifacts"
+from app.core.config import get_settings
+
+
+def _resolve_artifacts_dir() -> Path:
+    # ARTIFACTS_DIR lets a deployment (e.g. a Docker build context scoped to
+    # backend/, as on Fly.io) point at a copy of the artifacts placed inside
+    # that context. When unset, this preserves the exact original local
+    # behavior of resolving <repo root>/ai_model/artifacts.
+    configured = get_settings().artifacts_dir
+    if configured:
+        return Path(configured)
+    return Path(__file__).resolve().parents[3] / "ai_model" / "artifacts"
+
+
+_ARTIFACTS_DIR = _resolve_artifacts_dir()
 _METADATA_PATH = _ARTIFACTS_DIR / "model_metadata.json"
 _CHECKPOINT_PATH = _ARTIFACTS_DIR / "govi_model.pt"
 

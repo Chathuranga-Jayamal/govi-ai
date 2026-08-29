@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     llm_api_key: str = "changeme"
     llm_model: str = "nvidia/nemotron-3-ultra-550b-a55b:free"
     llm_base_url: str = "https://openrouter.ai/api/v1"
+    artifacts_dir: str | None = None
 
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", extra="ignore"

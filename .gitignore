@@ -12,10 +12,11 @@ backend/venv/
 backend/__pycache__/
 backend/**/__pycache__/
 backend/.env
+backend/.env.local-backup
 
 # AI model artifacts (large binaries — trained externally, not committed)
-ai_model/artifacts/*.pt
-ai_model/artifacts/*.tflite
+#ai_model/artifacts/*.pt
+#ai_model/artifacts/*.tflite
 
 # General
 .DS_Store
