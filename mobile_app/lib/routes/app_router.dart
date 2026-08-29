@@ -68,8 +68,13 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: '/marketplace/payhere-checkout',
-      builder: (context, state) =>
-          PayHereCheckoutScreen(checkout: state.extra! as PayHereCheckoutData),
+      builder: (context, state) {
+        final extra = state.extra! as ({PayHereCheckoutData checkout, int orderId});
+        return PayHereCheckoutScreen(
+          checkout: extra.checkout,
+          orderId: extra.orderId,
+        );
+      },
     ),
     GoRoute(
       path: '/profile',

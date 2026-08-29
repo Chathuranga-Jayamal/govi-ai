@@ -196,7 +196,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         if (!mounted) return;
         final bool? paymentCompleted = await context.push<bool>(
           '/marketplace/payhere-checkout',
-          extra: checkout,
+          extra: (checkout: checkout, orderId: order.id),
         );
         if (!mounted) return;
         if (paymentCompleted != true) {

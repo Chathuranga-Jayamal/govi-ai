@@ -1,6 +1,8 @@
 import hashlib
+import logging
 from datetime import datetime, timezone
 from decimal import Decimal
+from html import escape
 
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
@@ -11,6 +13,8 @@ from app.models.payment import Payment
 from app.models.product import Product
 from app.models.user import User
 from app.schemas.payment import PayHereCheckoutData
+
+logger = logging.getLogger(__name__)
 
 _CURRENCY = "LKR"
 
@@ -39,8 +43,24 @@ def _hashed_secret(merchant_secret: str) -> str:
 def _generate_hash(
     merchant_id: str, order_id: str, amount: str, currency: str, merchant_secret: str
 ) -> str:
-    raw = f"{merchant_id}{order_id}{amount}{currency}{_hashed_secret(merchant_secret)}"
-    return hashlib.md5(raw.encode()).hexdigest().upper()
+    hashed_secret = _hashed_secret(merchant_secret)
+    raw = f"{merchant_id}{order_id}{amount}{currency}{hashed_secret}"
+    result = hashlib.md5(raw.encode()).hexdigest().upper()
+    # Debug-only: the secret itself is never logged, only its md5 hash and
+    # the final pre-hash string, so this is safe to leave on temporarily
+    # while debugging a hash mismatch — remove once PayHere accepts it.
+    logger.debug(
+        "PayHere hash inputs: merchant_id=%r order_id=%r amount=%r currency=%r "
+        "hashed_secret=%r raw=%r result=%r",
+        merchant_id,
+        order_id,
+        amount,
+        currency,
+        hashed_secret,
+        raw,
+        result,
+    )
+    return result
 
 
 def _split_name(full_name: str) -> tuple[str, str]:
@@ -133,6 +153,29 @@ def initiate_payment(db: Session, order_id: int, current_user: User) -> PayHereC
         country="Sri Lanka",
         hash=payment_hash,
     )
+
+
+def render_checkout_form_html(checkout: PayHereCheckoutData) -> str:
+    """Renders a hidden auto-submitting form POSTing to PayHere's checkout URL.
+
+    Served from a real backend page (rather than built client-side in the
+    WebView) so the request PayHere receives comes from a genuine
+    https://govi-ai.fly.dev origin instead of no origin at all.
+    """
+    fields = checkout.model_dump(exclude={"checkout_url"})
+    hidden_inputs = "".join(
+        f'<input type="hidden" name="{escape(name)}" value="{escape(str(value))}">'
+        for name, value in fields.items()
+    )
+    return f"""<!DOCTYPE html>
+<html>
+  <body onload="document.forms[0].submit()">
+    <form method="POST" action="{escape(checkout.checkout_url)}">
+      {hidden_inputs}
+    </form>
+  </body>
+</html>
+"""
 
 
 def process_notification(

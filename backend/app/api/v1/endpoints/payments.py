@@ -20,6 +20,20 @@ def initiate_payment(
     return payment_service.initiate_payment(db, body.order_id, current_user)
 
 
+@router.get("/checkout-form", response_class=HTMLResponse)
+def payhere_checkout_form(
+    order_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> str:
+    # The WebView loads this page directly (rather than the app building the
+    # form HTML locally) so the request PayHere receives at checkout comes
+    # from a real https://govi-ai.fly.dev page, not a document with no
+    # network origin at all.
+    checkout = payment_service.initiate_payment(db, order_id, current_user)
+    return payment_service.render_checkout_form_html(checkout)
+
+
 @router.post("/notify", status_code=status.HTTP_200_OK)
 def payhere_notify(
     merchant_id: str = Form(...),
