@@ -10,10 +10,12 @@ import '../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../features/disease_detection/domain/capture_result_args.dart';
 import '../features/disease_detection/presentation/screens/capture_screen.dart';
 import '../features/disease_detection/presentation/screens/result_screen.dart';
+import '../features/marketplace/domain/payhere_checkout.dart';
 import '../features/marketplace/domain/product.dart';
 import '../features/marketplace/presentation/screens/cart_screen.dart';
 import '../features/marketplace/presentation/screens/checkout_screen.dart';
 import '../features/marketplace/presentation/screens/order_confirmation_screen.dart';
+import '../features/marketplace/presentation/screens/payhere_checkout_screen.dart';
 import '../features/marketplace/presentation/screens/product_detail_screen.dart';
 import '../features/marketplace/presentation/screens/product_list_screen.dart';
 import '../features/profile/presentation/screens/profile_screen.dart';
@@ -63,6 +65,11 @@ final GoRouter appRouter = GoRouter(
       path: '/marketplace/order-confirmation',
       builder: (context, state) =>
           OrderConfirmationScreen(orderNumber: state.extra! as String),
+    ),
+    GoRoute(
+      path: '/marketplace/payhere-checkout',
+      builder: (context, state) =>
+          PayHereCheckoutScreen(checkout: state.extra! as PayHereCheckoutData),
     ),
     GoRoute(
       path: '/profile',

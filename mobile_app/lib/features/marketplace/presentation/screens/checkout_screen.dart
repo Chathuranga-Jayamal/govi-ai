@@ -7,8 +7,10 @@ import '../../../../core/state/current_user_controller.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/order_repository.dart';
+import '../../data/payment_repository.dart';
 import '../../domain/cart_item.dart';
 import '../../domain/order.dart';
+import '../../domain/payhere_checkout.dart';
 
 const List<String> _sriLankaDistricts = [
   'Colombo',
@@ -95,6 +97,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   String? _selectedDistrict;
 
   final OrderRepository _orderRepository = OrderRepository();
+  final PaymentRepository _paymentRepository = PaymentRepository();
 
   CurrentUserController? _userController;
   bool _didPrefillPhone = false;
@@ -185,6 +188,25 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       // The server already cleared cart_items as part of placing the
       // order — this just resets local state to match.
       controller.clear();
+
+      if (_selectedMethod == _PaymentMethod.payHere) {
+        final PayHereCheckoutData checkout = await _paymentRepository.initiate(
+          orderId: order.id,
+        );
+        if (!mounted) return;
+        final bool? paymentCompleted = await context.push<bool>(
+          '/marketplace/payhere-checkout',
+          extra: checkout,
+        );
+        if (!mounted) return;
+        if (paymentCompleted != true) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Payment was cancelled.')),
+          );
+          return;
+        }
+      }
+
       context.pushReplacement(
         '/marketplace/order-confirmation',
         extra: order.orderNumber,

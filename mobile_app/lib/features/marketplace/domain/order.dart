@@ -56,6 +56,7 @@ class OrderItemEntry {
 /// Result of a GET/POST /orders call.
 class Order {
   const Order({
+    required this.id,
     required this.orderNumber,
     required this.dateLabel,
     required this.itemCount,
@@ -74,6 +75,7 @@ class Order {
         : null;
 
     return Order(
+      id: json['id'] as int,
       orderNumber: json['orderNumber'] as String,
       dateLabel: placedAt != null ? _formatDate(placedAt) : '',
       itemCount: items.length,
@@ -83,6 +85,7 @@ class Order {
     );
   }
 
+  final int id;
   final String orderNumber;
   final String dateLabel;
   final int itemCount;
